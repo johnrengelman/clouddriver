@@ -20,6 +20,7 @@ import com.netflix.frigga.Names
 
 class Keys {
   static enum Namespace {
+    NAMESPACES,
     APPLICATIONS,
     CLUSTERS,
     SERVER_GROUPS,
@@ -62,6 +63,11 @@ class Keys {
     }
 
     switch (result.type) {
+      case Namespace.NAMESPACES.ns:
+        result << [
+            account: parts[2],
+        ]
+        break
       case Namespace.APPLICATIONS.ns:
         result << [
             application: parts[2]
@@ -173,6 +179,10 @@ class Keys {
         break
     }
     result
+  }
+
+  static String getNamespaceKey(String account) {
+    "${Namespace.provider}:${Namespace.NAMESPACES}:${account}"
   }
 
   static String getApplicationKey(String application) {

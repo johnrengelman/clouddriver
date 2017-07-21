@@ -18,14 +18,12 @@ package com.netflix.spinnaker.clouddriver.kubernetes.provider.agent
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.spectator.api.Registry
-import com.netflix.spinnaker.cats.agent.CacheResult
+import com.netflix.spinnaker.cats.cache.Cache
 import com.netflix.spinnaker.cats.provider.ProviderCache
-import com.netflix.spinnaker.clouddriver.kubernetes.KubernetesCloudProvider
 import com.netflix.spinnaker.clouddriver.kubernetes.api.KubernetesApiAdaptor
 import com.netflix.spinnaker.clouddriver.kubernetes.cache.Keys
 import com.netflix.spinnaker.clouddriver.kubernetes.deploy.KubernetesUtil
 import com.netflix.spinnaker.clouddriver.kubernetes.security.KubernetesCredentials
-import com.netflix.spinnaker.clouddriver.kubernetes.security.KubernetesCredentialsInitializer
 import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository
 import io.fabric8.kubernetes.api.model.ObjectMeta
 import io.fabric8.kubernetes.api.model.PodList
@@ -41,6 +39,7 @@ class KubernetesServerGroupCachingAgentSpec extends Specification {
   static final private String CLUSTER = "$APP-cluster"
   static final private String REPLICATION_CONTROLLER = "$CLUSTER-v000"
   static final private String POD = "$REPLICATION_CONTROLLER-instance"
+  
 
   KubernetesServerGroupCachingAgent cachingAgent
   ReplicationControllerList replicationControllerList
@@ -48,6 +47,7 @@ class KubernetesServerGroupCachingAgentSpec extends Specification {
   KubernetesApiAdaptor apiMock
   Registry registryMock
   KubernetesCredentials kubernetesCredentials
+  Cache cacheMock
 
   String applicationKey
   String clusterKey
@@ -62,6 +62,7 @@ class KubernetesServerGroupCachingAgentSpec extends Specification {
     replicationControllerList = Mock(ReplicationControllerList)
     podList = Mock(PodList)
     apiMock = Mock(KubernetesApiAdaptor)
+    cacheMock = Mock(Cache)
 
     apiMock.getNamespacesByName() >> [NAMESPACE]
 

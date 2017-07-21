@@ -17,7 +17,9 @@
 package com.netflix.spinnaker.clouddriver.kubernetes.security
 
 import com.netflix.spectator.api.Registry
+import com.netflix.spinnaker.cats.cache.Cache
 import com.netflix.spinnaker.clouddriver.kubernetes.api.KubernetesApiAdaptor
+import com.netflix.spinnaker.clouddriver.kubernetes.cache.Keys
 import com.netflix.spinnaker.clouddriver.kubernetes.config.LinkedDockerRegistryConfiguration
 import com.netflix.spinnaker.clouddriver.security.AccountCredentials
 import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository
@@ -108,6 +110,7 @@ public class KubernetesNamedAccountCredentials implements AccountCredentials<Kub
     List<LinkedDockerRegistryConfiguration> dockerRegistries
     Registry spectatorRegistry
     AccountCredentialsRepository accountCredentialsRepository
+    Cache cache
 
     Builder name(String name) {
       this.name = name
@@ -197,6 +200,11 @@ public class KubernetesNamedAccountCredentials implements AccountCredentials<Kub
       return this
     }
 
+    Builder cache(Cache cache) {
+      this.cache = cache
+      return this
+    }
+
     Builder accountCredentialsRepository(AccountCredentialsRepository accountCredentialsRepository) {
       this.accountCredentialsRepository = accountCredentialsRepository
       return this
@@ -217,7 +225,9 @@ public class KubernetesNamedAccountCredentials implements AccountCredentials<Kub
           namespaces,
           omitNamespaces,
           dockerRegistries,
-          accountCredentialsRepository
+          accountCredentialsRepository,
+          Keys.getNamespaceKey(name),
+          cache
       )
     }
 

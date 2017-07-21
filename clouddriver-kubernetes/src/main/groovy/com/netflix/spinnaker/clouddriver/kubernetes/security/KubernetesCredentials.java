@@ -16,8 +16,11 @@
 
 package com.netflix.spinnaker.clouddriver.kubernetes.security;
 
+import com.netflix.spinnaker.cats.cache.Cache;
+import com.netflix.spinnaker.cats.cache.CacheData;
 import com.netflix.spinnaker.clouddriver.docker.registry.security.DockerRegistryNamedAccountCredentials;
 import com.netflix.spinnaker.clouddriver.kubernetes.api.KubernetesApiAdaptor;
+import com.netflix.spinnaker.clouddriver.kubernetes.cache.Keys;
 import com.netflix.spinnaker.clouddriver.kubernetes.config.LinkedDockerRegistryConfiguration;
 import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository;
 import io.fabric8.kubernetes.api.model.Namespace;
@@ -41,6 +44,8 @@ public class KubernetesCredentials {
   private final Logger LOG;
   private final AccountCredentialsRepository repository;
   private final HashSet<String> dynamicRegistries;
+  private final String cacheKey;
+  private final Cache cache;
   private List<String> oldNamespaces;
 
   // TODO(lwander): refactor apiAdaptor into KubernetesNamedAccountCredentials, and any other metadata that isn't
@@ -49,7 +54,9 @@ public class KubernetesCredentials {
                                List<String> namespaces,
                                List<String> omitNamespaces,
                                List<LinkedDockerRegistryConfiguration> dockerRegistries,
-                               AccountCredentialsRepository accountCredentialsRepository) {
+                               AccountCredentialsRepository accountCredentialsRepository,
+                               String cacheKey,
+                               Cache cache) {
     this.apiAdaptor = apiAdaptor;
     this.namespaces = namespaces != null ? namespaces : new ArrayList<>();
     this.omitNamespaces = omitNamespaces != null ? omitNamespaces : new ArrayList<>();
@@ -64,32 +71,28 @@ public class KubernetesCredentials {
     this.imagePullSecrets = new HashMap<>();
     this.repository = accountCredentialsRepository;
     this.LOG = LoggerFactory.getLogger(KubernetesCredentials.class);
+    this.cacheKey = cacheKey;
+    this.cache = cache;
 
     List<String> knownNamespaces = !this.namespaces.isEmpty() ? this.namespaces : apiAdaptor.getNamespacesByName();
     reconfigureRegistries(knownNamespaces, knownNamespaces);
   }
 
-  public List<String> getNamespaces() {
-    if (namespaces != null && !namespaces.isEmpty()) {
-      // If namespaces are provided, used them
-      return namespaces;
-    } else {
-      List<String> addedNamespaces = apiAdaptor.getNamespacesByName();
-      addedNamespaces.removeAll(omitNamespaces);
-
-      List<String> resultNamespaces = new ArrayList<>(addedNamespaces);
-
-      // Find the namespaces that were added, and add docker secrets to them. No need to track deleted
-      // namespaces since they delete their secrets automatically.
-      addedNamespaces.removeAll(oldNamespaces);
-      reconfigureRegistries(addedNamespaces, resultNamespaces);
-      oldNamespaces = resultNamespaces;
-
-      return resultNamespaces;
-    }
+  public List<String> getConfiguredNamespaces() {
+    return namespaces;
   }
 
-  private void reconfigureRegistries(List<String> affectedNamespaces, List<String> allNamespaces) {
+  @SuppressWarnings("unchecked")
+  public List<String> getNamespaces() {
+    List<String> namespaces = new ArrayList<>();
+    Collection<CacheData> data = cache.getAll(Keys.Namespace.NAMESPACES.toString(), cacheKey);
+    for (CacheData cd : data) {
+      namespaces.addAll((Collection<String>) cd.getAttributes().get("namespaces"));
+    }
+    return namespaces;
+  }
+
+  public void reconfigureRegistries(List<String> affectedNamespaces, List<String> allNamespaces) {
     for (int i = 0; i < dockerRegistries.size(); i++) {
       LinkedDockerRegistryConfiguration registry = dockerRegistries.get(i);
       List<String> registryNamespaces = registry.getNamespaces();
@@ -166,6 +169,18 @@ public class KubernetesCredentials {
 
   public KubernetesApiAdaptor getApiAdaptor() {
     return apiAdaptor;
+  }
+
+  public List<String> getOldNamespaces() {
+    return oldNamespaces;
+  }
+
+  public void setOldNamespaces(List<String> oldNamespaces) {
+    this.oldNamespaces = oldNamespaces;
+  }
+
+  public List<String> getOmitNamespaces() {
+    return omitNamespaces;
   }
 
   public List<LinkedDockerRegistryConfiguration> getDockerRegistries() {
