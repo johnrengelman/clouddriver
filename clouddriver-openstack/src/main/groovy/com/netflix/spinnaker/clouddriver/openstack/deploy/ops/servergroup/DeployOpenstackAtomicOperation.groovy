@@ -177,6 +177,11 @@ class DeployOpenstackAtomicOperation implements TaskStatusAware, AtomicOperation
 
       String userData = getUserData(provider, stackName)
 
+      if (description.serverGroupParameters.zones) {
+        task.updateStatus BASE_PHASE, "Creating zone policy for ${description.serverGroupParameters.zones.size()} zones"
+        addZonePlacementPolicy(description.serverGroupParameters.zones, templates.main, templates["servergroup_resource.yaml"])
+      }
+
       task.updateStatus BASE_PHASE, "Creating heat stack $stackName..."
       ServerGroupParameters params = description.serverGroupParameters.identity {
         it.networkId = subnet.networkId
@@ -185,6 +190,7 @@ class DeployOpenstackAtomicOperation implements TaskStatusAware, AtomicOperation
         it.sourceUserData = description.userData
         it
       }
+
       def template = objectMapper.writeValueAsString(templates.main)
       //drop the primary template and convert everything to string
       def subtemplates = (Map<String, String>) templates.findAll { it.key != "main"}.collectEntries {k, v -> [(k): objectMapper.writeValueAsString(v)]}
@@ -241,5 +247,39 @@ class DeployOpenstackAtomicOperation implements TaskStatusAware, AtomicOperation
       templateMap.put(filename, template)
       template ?: ""
     }
+  }
+
+  private static void addZonePlacementPolicy(List<String> zones, Map mainTemplate, Map resourceTemplate) {
+    def placementList = zones.collect { zone ->
+      [
+          name: zone,
+          weight: 100
+      ]
+    }
+    mainTemplate.resources.zone_policy = [
+        type: "OS::Senlin::Policy",
+        properties: [
+            type: "senlin.policy.zone_placement",
+            version: "1.0",
+            properties: [
+              regions: placementList
+            ]
+        ]
+    ]
+    mainTemplate.resources.zone_policy_group = [
+        type: "OS::Nova::ServerGroup",
+        properties: [
+          policies: [
+              [
+                  get_resource: "zone_policy"
+              ]
+          ]
+        ]
+    ]
+    resourceTemplate.resources.server.properties.scheduler_hints = [
+        group: [
+            get_resource: "zone_policy_group"
+        ]
+    ]
   }
 }
