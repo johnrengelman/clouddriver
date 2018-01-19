@@ -84,9 +84,6 @@ parameters:
     type: string
     description: Raw base64-encoded string that will execute upon server boot, if cloud-init is installed
     default: ""
-  resource_filename:
-    type: string
-    description: Member resource file name (i.e. servergroup_resource.yaml)
 resources:
   servergroup:
     type: OS::Heat::AutoScalingGroup
@@ -95,7 +92,7 @@ resources:
       max_size: {get_param: max_size}
       desired_capacity: {get_param: desired_size}
       resource:
-        type: {get_param: resource_filename}
+        type: servergroup_resource.yaml
         properties:
           flavor: {get_param: flavor}
           floating_network_id: {get_param: floating_network_id}
@@ -157,8 +154,8 @@ outputs:
   # we need to store subtemplate in servergroup output from create, as it is required to do an update and there is no native way
   # of obtaining it from a stack
   servergroup_resource:
-    description: resource_filename template value
-    value: {get_file: {get_param: resource_filename} }
+    description: servergroup_resource.yaml template value
+    value: {get_file: "servergroup_resource.yaml" }
   # we need to store subtemplate in servergroup output from create, as it is required to do an update and there is no native way
   # of obtaining it from a stack
   servergroup_resource_member:

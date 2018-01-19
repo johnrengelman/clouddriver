@@ -50,7 +50,6 @@ class ServerGroupParameters {
   String sourceUserDataType
   String sourceUserData
   Map<String, String> tags
-  String resourceFilename
   String floatingNetworkId
   List<String> zones
 
@@ -80,7 +79,6 @@ class ServerGroupParameters {
       source_user_data     : sourceUserData ?: null,
       tags                 : objectMapper.writeValueAsString(tags ?: [:]) ?: null,
       user_data            : rawUserData ?: null,
-      resource_filename    : resourceFilename ?: ServerGroupConstants.SUBTEMPLATE_FILE,
       zones                : zones?.join(',') ?: null,
     ]
     if (floatingNetworkId) {
@@ -118,7 +116,6 @@ class ServerGroupParameters {
       tags: unescapePythonUnicodeJsonMap(params.get('tags') ?: '{}'),
       sourceUserDataType: params.get('source_user_data_type'),
       sourceUserData: params.get('source_user_data'),
-      resourceFilename: params.get('resource_filename'),
       zones: unescapePythonUnicodeJsonList(params.get('zones')),
     )
   }

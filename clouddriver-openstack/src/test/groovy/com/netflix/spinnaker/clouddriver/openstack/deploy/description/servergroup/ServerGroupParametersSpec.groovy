@@ -87,7 +87,7 @@ class ServerGroupParametersSpec extends Specification {
       securityGroups: ["sg1"],
       autoscalingType: ServerGroupParameters.AutoscalingType.CPU,
       scaleup: scaleup, scaledown: scaledown, rawUserData: "echo foobar", tags: ["foo": "bar"],
-      sourceUserDataType: 'Text', sourceUserData: 'echo foobar', resourceFilename: 'servergroup_resource', zones: ["az1", "az2"])
+      sourceUserDataType: 'Text', sourceUserData: 'echo foobar', zones: ["az1", "az2"])
   }
 
   @Ignore

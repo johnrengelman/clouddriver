@@ -66,7 +66,6 @@ class OpenstackOrchestrationV1ClientProviderSpec extends OpenstackClientProvider
       tags: ['foo': 'bar'],
       sourceUserDataType: 'Text',
       sourceUserData: 'echo foobar',
-      resourceFilename: resourceFileName,
       zones: ["az1","az2"]
     )
     Map<String, String> params = [
@@ -347,7 +346,7 @@ class OpenstackOrchestrationV1ClientProviderSpec extends OpenstackClientProvider
     ServerGroupParameters parameters = new ServerGroupParameters(instanceType: instanceType, image: image,
       maxSize: maxSize, minSize: minSize, desiredSize: desiredSize, networkId: networkId, subnetId: subnetId,
       loadBalancers: loadBalancerIds, securityGroups: securityGroups, rawUserData: 'echo foobar', tags: ['foo': 'bar'],
-      sourceUserDataType: 'Text', sourceUserData: 'echo foobar', resourceFilename: resourceFileName, zones: ["az1","az2"])
+      sourceUserDataType: 'Text', sourceUserData: 'echo foobar', zones: ["az1","az2"])
     Map<String, String> params = [
       flavor               : parameters.instanceType,
       image                : parameters.image,
