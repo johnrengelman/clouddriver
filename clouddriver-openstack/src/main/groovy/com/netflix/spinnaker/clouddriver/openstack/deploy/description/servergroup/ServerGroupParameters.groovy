@@ -54,6 +54,9 @@ class ServerGroupParameters {
   List<String> zones
   Map<String, String> schedulerHints
 
+  // This is only used when migrating a stack from a previous version of clouddriver
+  String resourceFilename
+
   static final ObjectMapper objectMapper = new ObjectMapper()
 
   Map<String, String> toParamsMap() {
@@ -85,6 +88,10 @@ class ServerGroupParameters {
     ]
     if (floatingNetworkId) {
       params << [floating_network_id: floatingNetworkId]
+    }
+    // This is only used when migrating a stack from a previous version of clouddriver
+    if (resourceFilename) {
+      params << [resource_filename: resourceFilename]
     }
     params
   }
@@ -120,6 +127,7 @@ class ServerGroupParameters {
       sourceUserData: params.get('source_user_data'),
       zones: unescapePythonUnicodeJsonList(params.get('zones')),
       schedulerHints: unescapePythonUnicodeJsonMap(params.get('scheduler_hints') ?: '{}'),
+      resourceFilename: params.get('resource_filename')
     )
   }
 
